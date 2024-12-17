@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 
 type Operator = "=" | "!" | "<" | "<=" | ">" | ">=";
 
@@ -437,11 +438,11 @@ const goodBows = bows
 
 const myFilter: Rule[] = goodBows.map(bow => {
   return {
-    blockType: "Show",
+    blockType: "Hide",
     conditions: {
-      rarity: ["=", ["Rare"]],
+      rarity: ["=", ["Rare", "Magic"]],
       baseType: ["=", [bow.name]],
-      itemLevel: [">=", [79]],
+      // itemLevel: [">=", [79]],
   },
       actions: {
         setBorderColor: [255, 0, 0,null],
@@ -452,12 +453,27 @@ const myFilter: Rule[] = goodBows.map(bow => {
 const restOfBows: Rule[] = bows.filter(bow => !goodBows.includes(bow))
   .map(bow => {
     return {
-      blockType: "Hide",
-      conditions: {
-        baseType: ["=", [bow.name]],
-    },
+      blockType: "Show",
+    conditions: {
+      rarity: ["=", ["Rare", "Magic"]],
+      baseType: ["=", [bow.name]],
+      // itemLevel: [">=", [79]],
+  },
+      actions: {
+        setBorderColor: [255, 0, 0,null],
+        setTextColor: [255, 0, 0,null],
+        minimapIcon: [0, "Red", "Circle"],
+      }
     };
   })
 
-console.log(render([...myFilter, ...restOfBows]));
+const baseFilter = fs.readFileSync("basefilter.filter", "utf-8");
+
+const fullFilter = `
+${render([...myFilter, ...restOfBows])}
+
+${baseFilter}
+`;
+
+fs.writeFileSync("output.filter", fullFilter);
 
