@@ -1,0 +1,11 @@
+{
+  "name": "filter_lib",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:valdemargr/filter_lib",
+  "author": "Valdemar Grange <randomvald0069@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}
