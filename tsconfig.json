@@ -11,13 +11,13 @@
     "alwaysStrict": true,
     "sourceMap": true,
     "forceConsistentCasingInFileNames": true,
-    "noFallthroughCasesInSwitch": true,
+    // "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     // "noUnusedLocals": true,
     // "noUnusedParameters": true,
     "noImplicitAny": false,
     "noImplicitThis": false,
-    "strictNullChecks": false,
+    "strictNullChecks": false
   },
   "include": ["src", "__tests__"]
 }

@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as importer from './importer.js';
 
 type Operator = "=" | "!" | "<" | "<=" | ">" | ">=";
 
@@ -18,7 +19,7 @@ type Conditions = {
   rarity?: [Operator, EquipmentRarity[]];
   class?: [Operator, string[]];
   baseType?: [Operator, string[]];
-  prophecy?: string [];
+  prophecy?: string[];
   linkedSockets?: [Operator, number[]];
   socketGroup?: [Operator, string[]];
   sockets?: [Operator, number[]];
@@ -96,7 +97,7 @@ function renderValues(values: (number | string | boolean | null)[]): string {
 }
 
 function renderBinaryOperator(operator: Operator, values: (number | string | boolean | null)[]): string {
-  const res =  `${operator} ${renderValues(values)}`;
+  const res = `${operator} ${renderValues(values)}`;
   return res;
 }
 
@@ -232,248 +233,313 @@ type Bow = {
 
 const bows = [
   {
-name: "Crude Bow",
-physicalDamage: [6,9],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  1,
-requiredStats:{}
-  },{
-name: "Shortbow",
-physicalDamage: [7,14],
-critChance: 5,
-aps: 1.25,
-requiredLevel:  5,
-requiredStats:{dex:14 }
+    name: "Crude Bow",
+    physicalDamage: [6, 9],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 1,
+    requiredStats: {}
+  }, {
+    name: "Shortbow",
+    physicalDamage: [7, 14],
+    critChance: 5,
+    aps: 1.25,
+    requiredLevel: 5,
+    requiredStats: { dex: 14 }
 
-  },{
-name: "Warden Bow",
-physicalDamage: [12,18],
-critChance: 5,
-aps: 1.15,
-requiredLevel:  11,
-requiredStats:{dex:27 }
+  }, {
+    name: "Warden Bow",
+    physicalDamage: [12, 18],
+    critChance: 5,
+    aps: 1.15,
+    requiredLevel: 11,
+    requiredStats: { dex: 27 }
 
-  },{
-name: "Recurve Bow",
-physicalDamage: [15,31],
-critChance: 5,
-aps: 1.1,
-requiredLevel:  16,
-requiredStats:{dex:38 }
+  }, {
+    name: "Recurve Bow",
+    physicalDamage: [15, 31],
+    critChance: 5,
+    aps: 1.1,
+    requiredLevel: 16,
+    requiredStats: { dex: 38 }
 
-  },{
-name: "Composite Bow",
-physicalDamage: [19,31],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  22,
-requiredStats:{dex:52 }
+  }, {
+    name: "Composite Bow",
+    physicalDamage: [19, 31],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 22,
+    requiredStats: { dex: 52 }
 
-  },{
-name: "Dualstring Bow",
-physicalDamage: [16,31],
-critChance: 5,
-aps: 1.1,
-requiredLevel:  28,
-requiredStats:{dex:65 }
+  }, {
+    name: "Dualstring Bow",
+    physicalDamage: [16, 31],
+    critChance: 5,
+    aps: 1.1,
+    requiredLevel: 28,
+    requiredStats: { dex: 65 }
 
-  },{
-name: "Cultist Bow",
-physicalDamage: [36,59],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  33,
-requiredStats:{dex:76 }
+  }, {
+    name: "Cultist Bow",
+    physicalDamage: [36, 59],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 33,
+    requiredStats: { dex: 76 }
 
-  },{
-name: "Zealot Bow",
-physicalDamage: [31,47],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  39,
-requiredStats:{dex:90 }
+  }, {
+    name: "Zealot Bow",
+    physicalDamage: [31, 47],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 39,
+    requiredStats: { dex: 90 }
 
-  },{
-name: "Artillery Bow",
-physicalDamage: [39,72],
-critChance: 5,
-aps: 1.15,
-requiredLevel:  45,
-requiredStats:{dex:104 }
+  }, {
+    name: "Artillery Bow",
+    physicalDamage: [39, 72],
+    critChance: 5,
+    aps: 1.15,
+    requiredLevel: 45,
+    requiredStats: { dex: 104 }
 
-  },{
-name: "Tribal Bow",
-physicalDamage: [38,57],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  50,
-requiredStats:{dex:115 }
+  }, {
+    name: "Tribal Bow",
+    physicalDamage: [38, 57],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 50,
+    requiredStats: { dex: 115 }
 
-  },{
-name: "Greatbow",
-physicalDamage: [40,82],
-critChance: 6.5,
-aps: 1.15,
-requiredLevel:  52,
-requiredStats:{dex:119,str: 119 }
+  }, {
+    name: "Greatbow",
+    physicalDamage: [40, 82],
+    critChance: 6.5,
+    aps: 1.15,
+    requiredLevel: 52,
+    requiredStats: { dex: 119, str: 119 }
 
-  },{
-name: "Double Limb Bow",
-physicalDamage: [42,63],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  56,
-requiredStats:{dex:128 }
+  }, {
+    name: "Double Limb Bow",
+    physicalDamage: [42, 63],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 56,
+    requiredStats: { dex: 128 }
 
-  },{
-name: "Heavy Bow",
-physicalDamage: [45,75],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  65,
-requiredStats:{dex:148 }
+  }, {
+    name: "Heavy Bow",
+    physicalDamage: [45, 75],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 65,
+    requiredStats: { dex: 148 }
 
-  },{
-name: "Advanced Shortbow",
-physicalDamage: [29,54],
-critChance: 5,
-aps: 1.25,
-requiredLevel:  45,
-requiredStats:{dex:104 }
+  }, {
+    name: "Advanced Shortbow",
+    physicalDamage: [29, 54],
+    critChance: 5,
+    aps: 1.25,
+    requiredLevel: 45,
+    requiredStats: { dex: 104 }
 
-  },{
-name: "Advanced Warden Bow",
-physicalDamage: [35,53],
-critChance: 5,
-aps: 1.15,
-requiredLevel:  48,
-requiredStats:{dex:110 }
+  }, {
+    name: "Advanced Warden Bow",
+    physicalDamage: [35, 53],
+    critChance: 5,
+    aps: 1.15,
+    requiredLevel: 48,
+    requiredStats: { dex: 110 }
 
-  },{
-name: "Advanced Composite Bow",
-physicalDamage: [36,61],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  51,
-requiredStats:{dex:117 }
+  }, {
+    name: "Advanced Composite Bow",
+    physicalDamage: [36, 61],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 51,
+    requiredStats: { dex: 117 }
 
-  },{
-name: "Advanced Dualstring Bow",
-physicalDamage: [29,54],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  55,
-requiredStats:{dex:126 }
+  }, {
+    name: "Advanced Dualstring Bow",
+    physicalDamage: [29, 54],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 55,
+    requiredStats: { dex: 126 }
 
-  },{
-name: "Advanced Cultist Bow",
-physicalDamage: [41,69],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  59,
-requiredStats:{dex:135 }
+  }, {
+    name: "Advanced Cultist Bow",
+    physicalDamage: [41, 69],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 59,
+    requiredStats: { dex: 135 }
 
-  },{
-name: "Advanced Zealot Bow",
-physicalDamage: [46,69],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  62,
-requiredStats:{dex:142 }
+  }, {
+    name: "Advanced Zealot Bow",
+    physicalDamage: [46, 69],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 62,
+    requiredStats: { dex: 142 }
 
-  },{
-name: "Expert Shortbow",
-physicalDamage: [41,76],
-critChance: 5,
-aps: 1.25,
-requiredLevel:  67,
-requiredStats:{dex:174 }
+  }, {
+    name: "Expert Shortbow",
+    physicalDamage: [41, 76],
+    critChance: 5,
+    aps: 1.25,
+    requiredLevel: 67,
+    requiredStats: { dex: 174 }
 
-  },{
-name: "Expert Composite Bow",
-physicalDamage: [49,82],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  72,
-requiredStats:{dex:193 }
+  }, {
+    name: "Expert Composite Bow",
+    physicalDamage: [49, 82],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 72,
+    requiredStats: { dex: 193 }
 
-  },{
-name: "Expert Warden Bow",
-physicalDamage: [53,80],
-critChance: 5,
-aps: 1.15,
-requiredLevel:  77,
-requiredStats:{dex:212 }
+  }, {
+    name: "Expert Warden Bow",
+    physicalDamage: [53, 80],
+    critChance: 5,
+    aps: 1.15,
+    requiredLevel: 77,
+    requiredStats: { dex: 212 }
 
-  },{
-name: "Expert Dualstring Bow",
-physicalDamage: [39,73],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  78,
-requiredStats:{dex:212 }
+  }, {
+    name: "Expert Dualstring Bow",
+    physicalDamage: [39, 73],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 78,
+    requiredStats: { dex: 212 }
 
-  },{
-name: "Expert Cultist Bow",
-physicalDamage: [52,87],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  79,
-requiredStats:{dex:212 }
+  }, {
+    name: "Expert Cultist Bow",
+    physicalDamage: [52, 87],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 79,
+    requiredStats: { dex: 212 }
 
-  },{
-name: "Expert Zealot Bow",
-physicalDamage: [56,84],
-critChance: 5,
-aps: 1.2,
-requiredLevel:  77,
-requiredStats:{dex:212 }
+  }, {
+    name: "Expert Zealot Bow",
+    physicalDamage: [56, 84],
+    critChance: 5,
+    aps: 1.2,
+    requiredLevel: 77,
+    requiredStats: { dex: 212 }
   }
-]
+];
 
 const goodBows = bows
-  .filter(bow => bow.requiredLevel >= 60 && bow.critChance >= 5)
   .filter(bow => bow.name.includes("Expert"))
+  .filter(bow => bow.aps >= 1.2);
 
-const myFilter: Rule[] = goodBows.map(bow => {
-  return {
-    blockType: "Hide",
-    conditions: {
-      rarity: ["=", ["Rare", "Magic"]],
-      baseType: ["=", [bow.name]],
-      // itemLevel: [">=", [79]],
-  },
-      actions: {
-        setBorderColor: [255, 0, 0,null],
-      }
-  };
-});
-
-const restOfBows: Rule[] = bows.filter(bow => !goodBows.includes(bow))
-  .map(bow => {
+const filterRules: Rule[] =
+  goodBows.map(b => {
     return {
       blockType: "Show",
-    conditions: {
-      rarity: ["=", ["Rare", "Magic"]],
-      baseType: ["=", [bow.name]],
-      // itemLevel: [">=", [79]],
-  },
+      conditions: {
+        rarity: ["=", ["Rare", "Magic"]],
+        baseType: ["=", [b.name]],
+        itemLevel: [">=", [79]],
+      },
       actions: {
         setBorderColor: [255, 0, 0,null],
         setTextColor: [255, 0, 0,null],
-        minimapIcon: [0, "Red", "Circle"],
+        // minimapIcon: [0, "Red", "Circle"],
       }
-    };
-  })
+    }
+  });
+
+// const highlevelTricksterBases: Rule[] =
+//   bodyArmours
+//     .filter(ba => ba.energyShield >= 120 && ba.evasion == 0 && ba.armour == 0 && ba.requiredLevel >= 75)
+//     .map(ba => {
+//       return {
+//         blockType: "Show",
+//         conditions: {
+//           rarity: ["=", ["Rare", "Magic"]],
+//           baseType: ["=", [ba.name]],
+//           itemLevel: [">=", [79]],
+//         },
+//       };
+//     })
+
+const tattered: Rule[] = [
+  {
+    blockType: "Show",
+    conditions: {
+      rarity: ["=", ["Normal"]],
+      baseType: ["=", ["Tattered Robe"]]
+    },
+    actions: {
+      setBorderColor: [255, 0, 0,null],
+      setTextColor: [255, 0, 0,null],
+      // minimapIcon: [0, "Red", "Circle"],
+    }
+  }
+];
 
 const baseFilter = fs.readFileSync("basefilter.filter", "utf-8");
 
 const fullFilter = `
-${render([...myFilter, ...restOfBows])}
+${render(tattered)}
 
 ${baseFilter}
 `;
 
 fs.writeFileSync("output.filter", fullFilter);
 
+// const goodBows = bows
+//   .filter(bow => bow.requiredLevel >= 60 && bow.critChance >= 5)
+//   .filter(bow => bow.name.includes("Expert"))
+
+// const myFilter: Rule[] = goodBows.map(bow => {
+//   return {
+//     blockType: "Hide",
+//     conditions: {
+//       rarity: ["=", ["Rare", "Magic"]],
+//       baseType: ["=", [bow.name]],
+//       // itemLevel: [">=", [79]],
+//   },
+//       actions: {
+//         setBorderColor: [255, 0, 0,null],
+//       }
+//   };
+// });
+
+// const restOfBows: Rule[] = bows.filter(bow => !goodBows.includes(bow))
+//   .map(bow => {
+//     return {
+//       blockType: "Show",
+//     conditions: {
+//       rarity: ["=", ["Rare", "Magic"]],
+//       baseType: ["=", [bow.name]],
+//       // itemLevel: [">=", [79]],
+//   },
+//       actions: {
+//         setBorderColor: [255, 0, 0,null],
+//         setTextColor: [255, 0, 0,null],
+//         minimapIcon: [0, "Red", "Circle"],
+//       }
+//     };
+//   })
+
+// const baseFilter = fs.readFileSync("basefilter.filter", "utf-8");
+
+// const fullFilter = `
+// ${render([...myFilter, ...restOfBows])}
+
+// ${baseFilter}
+// `;
+
+// fs.writeFileSync("output.filter", fullFilter);
+
+const exportedItems = await importer.generateExportedItems("3.25.3.4")
+console.log(exportedItems.find(x => x.baseItem.Name === "Crude Bow"));
+console.log(exportedItems.filter(x => x.shieldInfo?.block > 20));
+console.log(exportedItems.filter(x => x.weaponInfo?.aps > 1.45));
+console.log(exportedItems.filter(x => x?.armourInfo?.movementSpeed <= 0));
