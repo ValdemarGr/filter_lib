@@ -1,17 +1,15 @@
-import { SCHEMA_URL, SCHEMA_VERSION, ValidFor, SchemaFile } from 'pathofexile-dat-schema';
+import { SCHEMA_URL, SCHEMA_VERSION } from 'pathofexile-dat-schema';
 import { readDatFile } from './vendor/poedat/dat/dat-file.js';
-import { readColumn } from './vendor/poedat/dat/reader.js';
 import * as loaders from './vendor/poedat/cli/bundle-loaders.js';
 import * as fs from 'fs/promises'
 import * as path from 'path'
-// import * as run from 'pathofexile-dat/dist.js';
 import * as exportTables from './vendor/poedat/cli/export-tables.js';
-import * as dat from './vendor/poedat/dat.js';
-import * as bundles from './vendor/poedat/bundles.js';
 
 const cacheDir = (patch: string) => path.join(process.cwd(), '/cache', `/${patch}`)
 
 const tblDir = (patch: string) => path.join(cacheDir(patch), 'tables');
+
+const isPoe2 = (patch: string) => patch.startsWith('4.');
 
 export async function singleImport(name: string, patch: string) {
   const cd = cacheDir(patch);
@@ -33,10 +31,12 @@ export async function singleImport(name: string, patch: string) {
   const headers = exportTables.importHeaders(name, datFile, { patch: patch }, schema);
   const tblPath = tblDir(patch);
   fs.mkdir(tblPath, { recursive: true });
+  const output = path.join(tblPath, `${name}.json`);
   await fs.writeFile(
-    path.join(tblPath, `${name}.json`),
+    output,
     JSON.stringify(exportTables.exportAllRows(headers, datFile), null, 2)
   );
+  return output;
 }
 
 const BaseItemTypes = "BaseItemTypes";
@@ -45,25 +45,74 @@ const WeaponTypes = "WeaponTypes";
 const ShieldTypes = "ShieldTypes";
 const ComponentAttributeRequirements = "ComponentAttributeRequirements";
 const ItemClasses = "ItemClasses";
-const AllFiles = [
+const AttributeRequirements = "AttributeRequirements";
+
+type Poe1FileNames = [
+  typeof BaseItemTypes,
+  typeof ArmourTypes,
+  typeof WeaponTypes,
+  typeof ShieldTypes,
+  typeof ComponentAttributeRequirements,
+  typeof ItemClasses
+]
+
+type Poe1FileNamesT = Poe1FileNames[number]
+
+const Poe1FileNames: Poe1FileNames = [
   BaseItemTypes,
   ArmourTypes,
   WeaponTypes,
   ShieldTypes,
   ComponentAttributeRequirements,
   ItemClasses
-];
+]
 
-export async function importPoe1Data(patch: string) {
-  return Promise.all(AllFiles.map(async tbl => {
-    return singleImport(tbl, patch);
-  }))
+type Poe2FileNames = [
+  typeof BaseItemTypes,
+  typeof ArmourTypes,
+  typeof WeaponTypes,
+  typeof ShieldTypes,
+  typeof ItemClasses,
+  typeof AttributeRequirements
+]
+
+type Poe2FileNamesT = Poe2FileNames[number]
+
+const Poe2FileNames: Poe2FileNames = [
+  BaseItemTypes,
+  ArmourTypes,
+  WeaponTypes,
+  ShieldTypes,
+  ItemClasses,
+  AttributeRequirements
+]
+
+export async function importData<K extends string>(files: K[], patch: string): Promise<Record<K, string>> {
+  const imported = await Promise.all(files.map(async k => [k, await singleImport(k, patch)]))
+  return Object.fromEntries(imported)
 }
 
-export type ExportedItem = {
+export async function importPoe1Data(patch: string): Promise<Record<Poe1FileNamesT, string>> {
+  return await importData(Poe1FileNames, patch);
+}
+
+export async function importPoe2Data(patch: string): Promise<Record<Poe2FileNamesT, string>> {
+  return await importData(Poe2FileNames, patch);
+}
+
+export async function readFiles<K extends string>(
+  files: Record<K, string>
+): Promise<Record<K, any[]>> {
+  const es = Object.entries<string>(files)
+  const m = await Promise.all(es.map(async ([k, v]) => [k, await read(v)]))
+  return Object.fromEntries(m) as Record<K, any[]>
+}
+
+export type UnifiedItem = {
   baseItem: {
     Id: string,
     Name: string,
+    DropLevel: number
   },
   itemClass: {
     Id: string,
@@ -98,21 +147,25 @@ export type ExportedItem = {
   }
 }
 
-export async function generateExportedItems(patch: string) {
-  await importPoe1Data(patch);
-  const td = tblDir(patch);
-  const bits = JSON.parse(await fs.readFile(path.join(td, 'BaseItemTypes.json'), { encoding: 'utf-8' })) as any[];
-  const ics = JSON.parse(await fs.readFile(path.join(td, 'ItemClasses.json'), { encoding: 'utf-8' })) as any[];
-  const ars = JSON.parse(await fs.readFile(path.join(td, 'ArmourTypes.json'), { encoding: 'utf-8' })) as any[];
-  const wts = JSON.parse(await fs.readFile(path.join(td, 'WeaponTypes.json'), { encoding: 'utf-8' })) as any[];
-  const sts = JSON.parse(await fs.readFile(path.join(td, 'ShieldTypes.json'), { encoding: 'utf-8' })) as any[];
-  const cars = JSON.parse(await fs.readFile(path.join(td, 'ComponentAttributeRequirements.json'), { encoding: 'utf-8' })) as any[];
-  const icMap = Object.fromEntries(ics.map(i => [i["_index"] as number, i]))
-  const arMap = Object.fromEntries(ars.map(i => [i.BaseItemTypesKey as number, i]))
-  const wtMap = Object.fromEntries(wts.map(i => [i.BaseItemTypesKey as number, i]))
-  const stMap = Object.fromEntries(sts.map(i => [i.BaseItemTypesKey as number, i]))
-  const carMap = Object.fromEntries(cars.map(i => [i.BaseItemTypesKey as string, i]))
-  return bits.map(b => {
+async function read(file: string): Promise<any[]> {
+  return JSON.parse(await fs.readFile(file, { encoding: 'utf-8' })) as any[]
+}
+
+function toMap(vs: any[], f: (x: any) => any): Record<any, any> {
+  return Object.fromEntries(vs.map(v => [f(v), v]))
+}
+
+type AmigiousKey = Poe1FileNames | Poe2FileNames;
+
+export async function generateExportedItems(patch: string): Promise<UnifiedItem[]> {
+  const rf = isPoe2(patch) ? await readFiles(await importPoe2Data(patch)) : await readFiles(await importPoe1Data(patch));
+  const icMap = toMap(rf.ItemClasses, x => x["_index"]);
+  const arMap = toMap(rf.ArmourTypes, x => x.BaseItemTypesKey);
+  const wtMap = toMap(rf.WeaponTypes, x => x.BaseItemTypesKey);
+  const stMap = toMap(rf.ShieldTypes, x => x.BaseItemTypesKey);
+  const carMap = "ComponentAttributeRequirements" in rf ? toMap(rf.ComponentAttributeRequirements, x => x.BaseItemTypesKey) :
+    toMap(rf.AttributeRequirements, x => x.BaseItemTypesKey);
+  return rf.BaseItemTypes.map(b => {
     const ic = icMap[b.ItemClassesKey];
     const ar = arMap[b["_index"]];
     const wt = wtMap[b["_index"]];
@@ -121,7 +174,8 @@ export async function generateExportedItems(patch: string) {
     return {
       baseItem: {
         Id: b.Id,
-        Name: b.Name
+        Name: b.Name,
+        DropLevel: b.DropLevel
       },
       itemClass: {
         Id: ic.Id,
@@ -138,21 +192,21 @@ export async function generateExportedItems(patch: string) {
       weaponInfo: wt ? {
         crit: wt.Critical,
         speed: wt.Speed,
-        aps: Math.round(((1/wt.Speed) * 1000) * 100) / 100,
+        aps: Math.round(((1 / wt.Speed) * 1000) * 100) / 100,
         min: wt.DamageMin,
         max: wt.DamageMax,
         rng: wt.RangeMax
       } : undefined,
       armourInfo: ar ? {
-        armourMin: ar.ArmourMin,
-        armourMax: ar.ArmourMax,
-        evasionMin: ar.EvasionMin,
-        evasionMax: ar.EvasionMax,
-        energyShieldMin: ar.EnergyShieldMin,
-        energyShieldMax: ar.EnergyShieldMax,
+        armourMin: ar.ArmourMin ?? ar.Armour,
+        armourMax: ar.ArmourMax ?? ar.Armour,
+        evasionMin: ar.EvasionMin ?? ar.Evasion,
+        evasionMax: ar.EvasionMax ?? ar.Evasion,
+        energyShieldMin: ar.EnergyShieldMin ?? ar.EnergyShield,
+        energyShieldMax: ar.EnergyShieldMax ?? ar.EnergyShield,
         movementSpeed: ar.IncreasedMovementSpeed,
-        wardMin: ar.WardMin,
-        wardMax: ar.WardMax
+        wardMin: ar.WardMin ?? ar.Ward,
+        wardMax: ar.WardMax ?? ar.Ward
       } : undefined
     }
   })
