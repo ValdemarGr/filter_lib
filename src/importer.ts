@@ -160,11 +160,11 @@ type AmigiousKey = Poe1FileNames | Poe2FileNames;
 export async function generateExportedItems(patch: string): Promise<UnifiedItem[]> {
   const rf = isPoe2(patch) ? await readFiles(await importPoe2Data(patch)) : await readFiles(await importPoe1Data(patch));
   const icMap = toMap(rf.ItemClasses, x => x["_index"]);
-  const arMap = toMap(rf.ArmourTypes, x => x.BaseItemTypesKey);
-  const wtMap = toMap(rf.WeaponTypes, x => x.BaseItemTypesKey);
-  const stMap = toMap(rf.ShieldTypes, x => x.BaseItemTypesKey);
-  const carMap = "ComponentAttributeRequirements" in rf ? toMap(rf.ComponentAttributeRequirements, x => x.BaseItemTypesKey) :
-    toMap(rf.AttributeRequirements, x => x.BaseItemTypesKey);
+  const arMap = toMap(rf.ArmourTypes, x => x.BaseItemTypesKey ?? x.BaseItemType);
+  const wtMap = toMap(rf.WeaponTypes, x => x.BaseItemTypesKey ?? x.BaseItemType);
+  const stMap = toMap(rf.ShieldTypes, x => x.BaseItemTypesKey ?? x.BaseItemType);
+  const carMap = "ComponentAttributeRequirements" in rf ? toMap(rf.ComponentAttributeRequirements, x => x.BaseItemTypesKey ?? x.BaseItemType) :
+    toMap(rf.AttributeRequirements, x => x.BaseItemTypesKey ?? x.BaseItemType);
   return rf.BaseItemTypes.map(b => {
     const ic = icMap[b.ItemClass] ?? icMap[b.ItemClassesKey];
     const ar = arMap[b["_index"]];
