@@ -181,8 +181,8 @@ function render(rules: Rule[]) {
   return renderedRules.join("\n\n");
 };
 
-// const exportedItems = await importer.generateExportedItems("3.25.3.4")
-const exportedItems = await importer.generateExportedItems("4.1.0.11")
+const exportedItems = await importer.generateExportedItems("3.25.3.4")
+// const exportedItems = await importer.generateExportedItems("4.1.0.11")
 // console.log(exportedItems.find(x => x.baseItem.Name === "Crude Bow"));
 // console.log(exportedItems.filter(x => x.shieldInfo?.block > 20));
 // console.log(exportedItems.filter(x => x.weaponInfo?.aps > 1.45));

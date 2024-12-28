@@ -166,7 +166,7 @@ export async function generateExportedItems(patch: string): Promise<UnifiedItem[
   const carMap = "ComponentAttributeRequirements" in rf ? toMap(rf.ComponentAttributeRequirements, x => x.BaseItemTypesKey) :
     toMap(rf.AttributeRequirements, x => x.BaseItemTypesKey);
   return rf.BaseItemTypes.map(b => {
-    const ic = icMap[b.ItemClass];
+    const ic = icMap[b.ItemClass] ?? icMap[b.ItemClassesKey];
     const ar = arMap[b["_index"]];
     const wt = wtMap[b["_index"]];
     const st = stMap[b["_index"]];
