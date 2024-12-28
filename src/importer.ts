@@ -21,10 +21,10 @@ export async function singleImport(name: string, patch: string) {
   )
 
   const schema = await (await fetch(SCHEMA_URL)).json();
-  if (schema.version !== SCHEMA_VERSION) {
-    console.error('Schema has format not compatible with this package. Check for "pathofexile-dat" updates.');
-    process.exit(1);
-  }
+  // if (schema.version !== SCHEMA_VERSION) {
+  //   console.error('Schema has format not compatible with this package. Check for "pathofexile-dat" updates.', schema.version, SCHEMA_VERSION);
+  //   process.exit(1);
+  // }
   console.log(`Exporting table "Data/${name}"`);
   const datFile = readDatFile('.datc64', await loader.tryGetFileContents(`Data/${name}.datc64`) ??
     await loader.getFileContents(`Data/${name}.datc64`));
@@ -166,7 +166,7 @@ export async function generateExportedItems(patch: string): Promise<UnifiedItem[
   const carMap = "ComponentAttributeRequirements" in rf ? toMap(rf.ComponentAttributeRequirements, x => x.BaseItemTypesKey) :
     toMap(rf.AttributeRequirements, x => x.BaseItemTypesKey);
   return rf.BaseItemTypes.map(b => {
-    const ic = icMap[b.ItemClassesKey];
+    const ic = icMap[b.ItemClass];
     const ar = arMap[b["_index"]];
     const wt = wtMap[b["_index"]];
     const st = stMap[b["_index"]];

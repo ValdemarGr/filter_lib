@@ -30,10 +30,10 @@ export async function exportTables (
 
   console.log('Loading schema for dat files')
   const schema = await (await fetch(SCHEMA_URL)).json()
-  if (schema.version !== SCHEMA_VERSION) {
-    console.error('Schema has format not compatible with this package. Check for "pathofexile-dat" updates.')
-    process.exit(1)
-  }
+  // if (schema.version !== SCHEMA_VERSION) {
+  //   console.error('Schema has format not compatible with this package. Check for "pathofexile-dat" updates.')
+  //   process.exit(1)
+  // }
 
   const includeTranslations = (config.translations?.length)
     ? TRANSLATIONS.filter(tr => config.translations!.includes(tr.name))
